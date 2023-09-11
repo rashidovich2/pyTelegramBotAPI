@@ -1065,9 +1065,7 @@ class Message(JsonDeserializable):
             opts['dice'] = Dice.de_json(obj['dice'])
             content_type = 'dice'
         if 'new_chat_members' in obj:
-            new_chat_members = []
-            for member in obj['new_chat_members']:
-                new_chat_members.append(User.de_json(member))
+            new_chat_members = [User.de_json(member) for member in obj['new_chat_members']]
             opts['new_chat_members'] = new_chat_members
             content_type = 'new_chat_members'
         if 'left_chat_member' in obj:
@@ -1179,30 +1177,21 @@ class Message(JsonDeserializable):
         """
         Parses chat.
         """
-        if 'first_name' not in chat:
-            return GroupChat.de_json(chat)
-        else:
-            return User.de_json(chat)
+        return User.de_json(chat) if 'first_name' in chat else GroupChat.de_json(chat)
 
     @classmethod
     def parse_photo(cls, photo_size_array):
         """
         Parses photo array.
         """
-        ret = []
-        for ps in photo_size_array:
-            ret.append(PhotoSize.de_json(ps))
-        return ret
+        return [PhotoSize.de_json(ps) for ps in photo_size_array]
 
     @classmethod
     def parse_entities(cls, message_entity_array):
         """
         Parses message entity array.
         """
-        ret = []
-        for me in message_entity_array:
-            ret.append(MessageEntity.de_json(me))
-        return ret
+        return [MessageEntity.de_json(me) for me in message_entity_array]
 
     def __init__(self, message_id, from_user, date, chat, content_type, options, json_string):
         self.content_type: str = content_type
@@ -1412,9 +1401,7 @@ class MessageEntity(Dictionaryable, JsonSerializable, JsonDeserializable):
         """
         Converts a list of MessageEntity objects to a list of dictionaries.
         """
-        res = []
-        for e in entity_list:
-            res.append(MessageEntity.to_dict(e))
+        res = [MessageEntity.to_dict(e) for e in entity_list]
         return res or None
 
     @classmethod
@@ -2489,16 +2476,16 @@ class InlineKeyboardMarkup(Dictionaryable, JsonSerializable, JsonDeserializable)
         """
         if row_width is None:
             row_width = self.row_width
-        
+
         if row_width > self.max_row_keys:
             # Todo: Will be replaced with Exception in future releases
             logger.error('Telegram does not support inline keyboard row width over %d.' % self.max_row_keys)
             row_width = self.max_row_keys
-        
+
         for row in service_utils.chunks(args, row_width):
-            button_array = [button for button in row]
+            button_array = list(row)
             self.keyboard.append(button_array)
-        
+
         return self
         
     def row(self, *args):
@@ -2523,9 +2510,11 @@ class InlineKeyboardMarkup(Dictionaryable, JsonSerializable, JsonDeserializable)
         return json.dumps(self.to_dict())
 
     def to_dict(self):
-        json_dict = dict()
-        json_dict['inline_keyboard'] = [[button.to_dict() for button in row] for row in self.keyboard]
-        return json_dict
+        return {
+            'inline_keyboard': [
+                [button.to_dict() for button in row] for row in self.keyboard
+            ]
+        }
 
 
 class InlineKeyboardButton(Dictionaryable, JsonSerializable, JsonDeserializable):
@@ -2716,7 +2705,7 @@ class CallbackQuery(JsonDeserializable):
     def de_json(cls, json_string):
         if json_string is None: return None
         obj = cls.check_json(json_string)
-        if not "data" in obj:
+        if "data" not in obj:
             # "data" field is Optional in the API, but historically is mandatory in the class constructor
             obj['data'] = None
         obj['from_user'] = User.de_json(obj.pop('from'))
@@ -3176,7 +3165,7 @@ class ChatPermissions(JsonDeserializable, JsonSerializable, Dictionaryable):
         return json.dumps(self.to_dict())
 
     def to_dict(self):
-        json_dict = dict()
+        json_dict = {}
         if self.can_send_messages is not None:
             json_dict['can_send_messages'] = self.can_send_messages
         if self.can_send_audios is not None:
@@ -3206,7 +3195,7 @@ class ChatPermissions(JsonDeserializable, JsonSerializable, Dictionaryable):
             json_dict['can_pin_messages'] = self.can_pin_messages
         if self.can_manage_topics is not None:
             json_dict['can_manage_topics'] = self.can_manage_topics
-        
+
         return json_dict
 
 
@@ -5343,20 +5332,14 @@ class Game(JsonDeserializable):
         """
         Parse the photo array into a list of PhotoSize objects
         """
-        ret = []
-        for ps in photo_size_array:
-            ret.append(PhotoSize.de_json(ps))
-        return ret
+        return [PhotoSize.de_json(ps) for ps in photo_size_array]
 
     @classmethod
     def parse_entities(cls, message_entity_array):
         """
         Parse the message entity array into a list of MessageEntity objects
         """
-        ret = []
-        for me in message_entity_array:
-            ret.append(MessageEntity.de_json(me))
-        return ret
+        return [MessageEntity.de_json(me) for me in message_entity_array]
 
     def __init__(self, title, description, photo, text=None, text_entities=None, animation=None, **kwargs):
         self.title: str = title
@@ -5646,11 +5629,8 @@ class ShippingOption(JsonSerializable):
         return self
 
     def to_json(self):
-        price_list = []
-        for p in self.prices:
-            price_list.append(p.to_dict())
-        json_dict = json.dumps({'id': self.id, 'title': self.title, 'prices': price_list})
-        return json_dict
+        price_list = [p.to_dict() for p in self.prices]
+        return json.dumps({'id': self.id, 'title': self.title, 'prices': price_list})
 
 
 class SuccessfulPayment(JsonDeserializable):
@@ -5829,9 +5809,7 @@ class StickerSet(JsonDeserializable):
     def de_json(cls, json_string):
         if (json_string is None): return None
         obj = cls.check_json(json_string)
-        stickers = []
-        for s in obj['stickers']:
-            stickers.append(Sticker.de_json(s))
+        stickers = [Sticker.de_json(s) for s in obj['stickers']]
         obj['stickers'] = stickers
         if 'thumb' in obj and 'file_id' in obj['thumb']:
             obj['thumb'] = PhotoSize.de_json(obj['thumb'])
@@ -6427,9 +6405,7 @@ class Poll(JsonDeserializable):
         if (json_string is None): return None
         obj = cls.check_json(json_string)
         obj['poll_id'] = obj.pop('id')
-        options = []
-        for opt in obj['options']:
-            options.append(PollOption.de_json(opt))
+        options = [PollOption.de_json(opt) for opt in obj['options']]
         obj['options'] = options or None
         if 'explanation_entities' in obj:
             obj['explanation_entities'] = Message.parse_entities(obj['explanation_entities'])
@@ -7049,14 +7025,15 @@ class InputFile:
         self._file, self.file_name = self._resolve_file(file)
 
     def _resolve_file(self, file):
-        if isinstance(file, str):
+        if (
+            isinstance(file, str)
+            or not isinstance(file, IOBase)
+            and isinstance(file, Path)
+        ):
             _file = open(file, 'rb')
             return _file, os.path.basename(_file.name)
         elif isinstance(file, IOBase):
             return file, os.path.basename(file.name)
-        elif isinstance(file, Path):
-            _file = open(file, 'rb')
-            return _file, os.path.basename(_file.name)
         else:
             raise TypeError("File must be a string or a file-like object(pathlib.Path, io.IOBase).")
 

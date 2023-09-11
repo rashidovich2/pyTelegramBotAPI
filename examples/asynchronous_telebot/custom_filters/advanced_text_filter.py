@@ -20,7 +20,7 @@ async def hello_handler(message: types.Message):
 
 @bot.message_handler(text=TextFilter(equals='hello', ignore_case=True))
 async def hello_handler_ignore_case(message: types.Message):
-    await bot.send_message(message.chat.id, message.text + ' ignore case')
+    await bot.send_message(message.chat.id, f'{message.text} ignore case')
 
 
 @bot.message_handler(text=TextFilter(contains=['good', 'bad']))
@@ -30,7 +30,7 @@ async def contains_handler(message: types.Message):
 
 @bot.message_handler(text=TextFilter(contains=['good', 'bad'], ignore_case=True))
 async def contains_handler_ignore_case(message: types.Message):
-    await bot.send_message(message.chat.id, message.text + ' ignore case')
+    await bot.send_message(message.chat.id, f'{message.text} ignore case')
 
 
 @bot.message_handler(text=TextFilter(starts_with='st'))  # stArk, steve, stONE
@@ -40,7 +40,7 @@ async def starts_with_handler(message: types.Message):
 
 @bot.message_handler(text=TextFilter(starts_with='st', ignore_case=True))  # STark, sTeve, stONE
 async def starts_with_handler_ignore_case(message: types.Message):
-    await bot.send_message(message.chat.id, message.text + ' ignore case')
+    await bot.send_message(message.chat.id, f'{message.text} ignore case')
 
 
 @bot.message_handler(text=TextFilter(ends_with='ay'))  # wednesday, SUNday, WeekDay
@@ -50,7 +50,7 @@ async def ends_with_handler(message: types.Message):
 
 @bot.message_handler(text=TextFilter(ends_with='ay', ignore_case=True))  # wednesdAY, sundAy, WeekdaY
 async def ends_with_handler_ignore_case(message: types.Message):
-    await bot.send_message(message.chat.id, message.text + ' ignore case')
+    await bot.send_message(message.chat.id, f'{message.text} ignore case')
 
 
 @bot.message_handler(text=TextFilter(equals='/callback'))
@@ -71,7 +71,9 @@ async def callback_query_handler(call: types.CallbackQuery):
 
 @bot.callback_query_handler(func=None, text=TextFilter(equals='example', ignore_case=True))
 async def callback_query_handler_ignore_case(call: types.CallbackQuery):
-    await bot.answer_callback_query(call.id, call.data + " ignore case", show_alert=True)
+    await bot.answer_callback_query(
+        call.id, f"{call.data} ignore case", show_alert=True
+    )
 
 
 @bot.message_handler(text=TextFilter(equals='/poll'))
@@ -87,7 +89,7 @@ async def poll_question_handler(poll: types.Poll):
 
 @bot.poll_handler(func=None, text=TextFilter(equals='When do you prefer to work?', ignore_case=True))
 async def poll_question_handler_ignore_case(poll: types.Poll):
-    print(poll.question + ' ignore case')
+    print(f'{poll.question} ignore case')
 
 
 # either hi or contains one of (привет, salom)

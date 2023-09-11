@@ -27,8 +27,8 @@ WEBHOOK_SSL_PRIV = './webhook_pkey.pem'  # Path to the ssl private key
 # When asked for "Common Name (e.g. server FQDN or YOUR name)" you should reply
 # with the same value in you put in WEBHOOK_HOST
 
-WEBHOOK_URL_BASE = "https://%s:%s" % (WEBHOOK_HOST, WEBHOOK_PORT)
-WEBHOOK_URL_PATH = "/%s/" % (API_TOKEN)
+WEBHOOK_URL_BASE = f"https://{WEBHOOK_HOST}:{WEBHOOK_PORT}"
+WEBHOOK_URL_PATH = f"/{API_TOKEN}/"
 
 logger = telebot.logger
 telebot.logger.setLevel(logging.INFO)
@@ -40,16 +40,17 @@ bot = telebot.TeleBot(API_TOKEN)
 class WebhookServer(object):
     @cherrypy.expose
     def index(self):
-        if 'content-length' in cherrypy.request.headers and \
-           'content-type' in cherrypy.request.headers and \
-           cherrypy.request.headers['content-type'] == 'application/json':
-            length = int(cherrypy.request.headers['content-length'])
-            json_string = cherrypy.request.body.read(length).decode("utf-8")
-            update = telebot.types.Update.de_json(json_string)
-            bot.process_new_updates([update])
-            return ''
-        else:
+        if (
+            'content-length' not in cherrypy.request.headers
+            or 'content-type' not in cherrypy.request.headers
+            or cherrypy.request.headers['content-type'] != 'application/json'
+        ):
             raise cherrypy.HTTPError(403)
+        length = int(cherrypy.request.headers['content-length'])
+        json_string = cherrypy.request.body.read(length).decode("utf-8")
+        update = telebot.types.Update.de_json(json_string)
+        bot.process_new_updates([update])
+        return ''
 
 
 # Handle '/start' and '/help'

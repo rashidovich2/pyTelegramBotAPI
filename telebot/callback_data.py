@@ -138,7 +138,7 @@ class CallbackData:
             raise ValueError('Invalid parts count!')
 
         result = {'@': prefix}
-        result.update(zip(self._part_names, parts))
+        result |= zip(self._part_names, parts)
         return result
 
     def filter(self, **config) -> CallbackDataFilter:
@@ -149,7 +149,7 @@ class CallbackData:
         :return: CallbackDataFilter class
         """
 
-        for key in config.keys():
+        for key in config:
             if key not in self._part_names:
                 raise ValueError(f'Invalid field name {key!r}')
         return CallbackDataFilter(self, config)

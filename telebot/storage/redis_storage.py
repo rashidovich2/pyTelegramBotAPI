@@ -83,9 +83,8 @@ class StateRedisStorage(StateStorageBase):
         """
         Delete state for a particular user in a chat.
         """
-        response = self.get_record(chat_id)
-        user_id = str(user_id)
-        if response:
+        if response := self.get_record(chat_id):
+            user_id = str(user_id)
             if user_id in response:
                 del response[user_id]
                 if user_id == str(chat_id):
@@ -100,9 +99,8 @@ class StateRedisStorage(StateStorageBase):
         """
         Get value for a data of a user in a chat.
         """
-        response = self.get_record(chat_id)
-        user_id = str(user_id)
-        if response:
+        if response := self.get_record(chat_id):
+            user_id = str(user_id)
             if user_id in response:
                 if key in response[user_id]['data']:
                     return response[user_id]['data'][key]
@@ -113,9 +111,8 @@ class StateRedisStorage(StateStorageBase):
         """
         Get state of a user in a chat.
         """
-        response = self.get_record(chat_id)
-        user_id = str(user_id)
-        if response:
+        if response := self.get_record(chat_id):
+            user_id = str(user_id)
             if user_id in response:
                 return response[user_id]['state']
 
@@ -126,9 +123,8 @@ class StateRedisStorage(StateStorageBase):
         """
         Get data of particular user in a particular chat.
         """
-        response = self.get_record(chat_id)
-        user_id = str(user_id)
-        if response:
+        if response := self.get_record(chat_id):
+            user_id = str(user_id)
             if user_id in response:
                 return response[user_id]['data']
         return None
@@ -138,9 +134,8 @@ class StateRedisStorage(StateStorageBase):
         """
         Reset data of a user in a chat.
         """
-        response = self.get_record(chat_id)
-        user_id = str(user_id)
-        if response:
+        if response := self.get_record(chat_id):
+            user_id = str(user_id)
             if user_id in response:
                 response[user_id]['data'] = {}
                 self.set_record(chat_id, response)
@@ -153,9 +148,8 @@ class StateRedisStorage(StateStorageBase):
         """
         Set data without interactive data.
         """
-        response = self.get_record(chat_id)
-        user_id = str(user_id)
-        if response:
+        if response := self.get_record(chat_id):
+            user_id = str(user_id)
             if user_id in response:
                 response[user_id]['data'][key] = value
                 self.set_record(chat_id, response)
@@ -170,9 +164,8 @@ class StateRedisStorage(StateStorageBase):
         return StateContext(self, chat_id, user_id)
     
     def save(self, chat_id, user_id, data):
-        response = self.get_record(chat_id)
-        user_id = str(user_id)
-        if response:
+        if response := self.get_record(chat_id):
+            user_id = str(user_id)
             if user_id in response:
                 response[user_id]['data'] = dict(data, **response[user_id]['data'])
                 self.set_record(chat_id, response)

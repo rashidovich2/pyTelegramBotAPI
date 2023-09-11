@@ -32,7 +32,7 @@ async def webhook(request):
     return web.Response()
 
 
-app.router.add_post("/" + config.WEBHOOK_PATH + "/{token}", webhook)
+app.router.add_post(f"/{config.WEBHOOK_PATH}" + "/{token}", webhook)
 
 
 @main_bot.message_handler(commands=['add_bot'])

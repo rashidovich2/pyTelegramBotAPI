@@ -28,8 +28,8 @@ WEBHOOK_SSL_PRIV = './webhook_pkey.pem'  # Path to the ssl private key
 # When asked for "Common Name (e.g. server FQDN or YOUR name)" you should reply
 # with the same value in you put in WEBHOOK_HOST
 
-WEBHOOK_URL_BASE = "https://{}:{}".format(WEBHOOK_HOST, WEBHOOK_PORT)
-WEBHOOK_URL_PATH = "/{}/".format(API_TOKEN)
+WEBHOOK_URL_BASE = f"https://{WEBHOOK_HOST}:{WEBHOOK_PORT}"
+WEBHOOK_URL_PATH = f"/{API_TOKEN}/"
 
 logger = telebot.logger
 telebot.logger.setLevel(logging.INFO)
@@ -41,13 +41,12 @@ app = web.Application()
 
 # Process webhook calls
 async def handle(request):
-    if request.match_info.get('token') == bot.token:
-        request_body_dict = await request.json()
-        update = telebot.types.Update.de_json(request_body_dict)
-        bot.process_new_updates([update])
-        return web.Response()
-    else:
+    if request.match_info.get('token') != bot.token:
         return web.Response(status=403)
+    request_body_dict = await request.json()
+    update = telebot.types.Update.de_json(request_body_dict)
+    bot.process_new_updates([update])
+    return web.Response()
 
 
 app.router.add_post('/{token}/', handle)

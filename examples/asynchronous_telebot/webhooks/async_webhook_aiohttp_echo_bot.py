@@ -17,8 +17,8 @@ WEBHOOK_PORT = 8443  # 443, 80, 88 or 8443 (port need to be 'open')
 WEBHOOK_LISTEN = '0.0.0.0'  # In some VPS you may need to put here the IP addr
 WEBHOOK_SSL_CERT = './webhook_cert.pem'  # Path to the ssl certificate
 WEBHOOK_SSL_PRIV = './webhook_pkey.pem'  # Path to the ssl private key
-WEBHOOK_URL_BASE = "https://{}:{}".format(WEBHOOK_HOST, WEBHOOK_PORT)
-WEBHOOK_URL_PATH = "/{}/".format(API_TOKEN)
+WEBHOOK_URL_BASE = f"https://{WEBHOOK_HOST}:{WEBHOOK_PORT}"
+WEBHOOK_URL_PATH = f"/{API_TOKEN}/"
 
 # Quick'n'dirty SSL certificate generation:
 #
@@ -35,13 +35,12 @@ bot = AsyncTeleBot(API_TOKEN)
 
 # Process webhook calls
 async def handle(request):
-    if request.match_info.get('token') == bot.token:
-        request_body_dict = await request.json()
-        update = telebot.types.Update.de_json(request_body_dict)
-        asyncio.ensure_future(bot.process_new_updates([update]))
-        return web.Response()
-    else:
+    if request.match_info.get('token') != bot.token:
         return web.Response(status=403)
+    request_body_dict = await request.json()
+    update = telebot.types.Update.de_json(request_body_dict)
+    asyncio.ensure_future(bot.process_new_updates([update]))
+    return web.Response()
 
 
 # Handle '/start' and '/help'

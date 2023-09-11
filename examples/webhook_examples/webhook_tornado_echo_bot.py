@@ -52,18 +52,18 @@ class WebhookServ(tornado.web.RequestHandler):
 
     def post(self):
         if "Content-Length" in self.request.headers and \
-            "Content-Type" in self.request.headers and \
-            self.request.headers['Content-Type'] == "application/json":
+                "Content-Type" in self.request.headers and \
+                self.request.headers['Content-Type'] == "application/json":
 
             # length = int(self.request.headers['Content-Length'])
             json_data = self.request.body.decode("utf-8")
             update = telebot.types.Update.de_json(json_data)
             bot.process_new_updates([update])
             self.write("")
-            self.finish()
         else:
             self.write("What are you doing here?")
-            self.finish()
+
+        self.finish()
 
 
 tornado.options.define("port", default=WEBHOOK_PORT, help="run on the given port", type=int)
@@ -98,10 +98,9 @@ bot.set_webhook(url=WEBHOOK_URL_BASE,
 tornado.options.options.logging = None
 tornado.options.parse_command_line()
 signal.signal(signal.SIGINT, signal_handler)
-application = tornado.web.Application([
-    (r"/", Root),
-    (r"/" + WEBHOOK_SECRET, WebhookServ)
-])
+application = tornado.web.Application(
+    [(r"/", Root), (f"/{WEBHOOK_SECRET}", WebhookServ)]
+)
 
 http_server = tornado.httpserver.HTTPServer(application, ssl_options={
     "certfile": WEBHOOK_CERT,
