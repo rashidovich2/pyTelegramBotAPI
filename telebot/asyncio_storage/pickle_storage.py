@@ -11,15 +11,7 @@ class StatePickleStorage(StateStorageBase):
         self.data = self.read()
 
     async def convert_old_to_new(self):
-        # old looks like:
-        # {1: {'state': 'start', 'data': {'name': 'John'}}
-        # we should update old version pickle to new.
-        # new looks like:
-        # {1: {2: {'state': 'start', 'data': {'name': 'John'}}}}
-        new_data = {}
-        for key, value in self.data.items():
-            # this returns us id and dict with data and state
-            new_data[key] = {key: value} # convert this to new
+        new_data = {key: {key: value} for key, value in self.data.items()}
         # pass it to global data
         self.data = new_data
         self.update_data() # update data in file
@@ -35,15 +27,13 @@ class StatePickleStorage(StateStorageBase):
                 pickle.dump({}, file)
 
     def read(self):
-        file = open(self.file_path, 'rb')
-        data = pickle.load(file)
-        file.close()
+        with open(self.file_path, 'rb') as file:
+            data = pickle.load(file)
         return data
     
     def update_data(self):
-        file = open(self.file_path, 'wb+')
-        pickle.dump(self.data, file, protocol=pickle.HIGHEST_PROTOCOL)
-        file.close()
+        with open(self.file_path, 'wb+') as file:
+            pickle.dump(self.data, file, protocol=pickle.HIGHEST_PROTOCOL)
 
     async def set_state(self, chat_id, user_id, state):
         if hasattr(state, 'name'):
@@ -51,12 +41,10 @@ class StatePickleStorage(StateStorageBase):
         if chat_id in self.data:
             if user_id in self.data[chat_id]:
                 self.data[chat_id][user_id]['state'] = state
-                self.update_data()
-                return True
             else:
                 self.data[chat_id][user_id] = {'state': state, 'data': {}}
-                self.update_data()
-                return True
+            self.update_data()
+            return True
         self.data[chat_id] = {user_id: {'state': state, 'data': {}}}
         self.update_data()
         return True
@@ -100,7 +88,7 @@ class StatePickleStorage(StateStorageBase):
                 self.data[chat_id][user_id]['data'][key] = value
                 self.update_data()
                 return True
-        raise RuntimeError('chat_id {} and user_id {} does not exist'.format(chat_id, user_id))
+        raise RuntimeError(f'chat_id {chat_id} and user_id {user_id} does not exist')
 
     def get_interactive_data(self, chat_id, user_id):
         return StateContext(self, chat_id, user_id)

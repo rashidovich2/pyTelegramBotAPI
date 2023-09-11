@@ -65,11 +65,18 @@ def process_sex_step(message):
         chat_id = message.chat.id
         sex = message.text
         user = user_dict[chat_id]
-        if (sex == u'Male') or (sex == u'Female'):
+        if sex in [u'Male', u'Female']:
             user.sex = sex
         else:
             raise Exception("Unknown sex")
-        bot.send_message(chat_id, 'Nice to meet you ' + user.name + '\n Age:' + str(user.age) + '\n Sex:' + user.sex)
+        bot.send_message(
+            chat_id,
+            f'Nice to meet you {user.name}'
+            + '\n Age:'
+            + str(user.age)
+            + '\n Sex:'
+            + user.sex,
+        )
     except Exception as e:
         bot.reply_to(message, 'oooops')
 

@@ -94,8 +94,8 @@ def _make_request(token, method_name, method='get', params=None, files=None):
         for key, value in files_copy.items():
             if isinstance(value, types.InputFile):
                 files[key] = value.file
-                
-    
+
+
     if files and format_header_param:
         fields.format_header_param = _no_encode(format_header_param)
     if params:
@@ -156,11 +156,10 @@ def _make_request(token, method_name, method='get', params=None, files=None):
         result = _get_req_session().request(
             method, request_url, params=params, files=files,
             timeout=(connect_timeout, read_timeout), proxies=proxy)
-    
+
     logger.debug("The server returned: '{0}'".format(result.text.encode('utf8')))
-    
-    json_result = _check_result(method_name, result)
-    if json_result:
+
+    if json_result := _check_result(method_name, result):
         return json_result['result']
 
 
@@ -270,9 +269,7 @@ def set_webhook(token, url=None, certificate=None, max_connections=None, allowed
     payload = {
         'url': url if url else "",
     }
-    files = None
-    if certificate:
-        files = {'certificate': certificate}
+    files = {'certificate': certificate} if certificate else None
     if max_connections:
         payload['max_connections'] = max_connections
     if allowed_updates is not None:       # Empty lists should pass
@@ -695,13 +692,12 @@ def send_video(token, chat_id, data, duration=None, caption=None, reply_to_messa
     if timeout:
         payload['timeout'] = timeout
     if thumb:
-        if not util.is_string(thumb):
-            if files:
-                files['thumb'] = thumb
-            else:
-                files = {'thumb': thumb}
-        else:
+        if util.is_string(thumb):
             payload['thumb'] = thumb
+        elif files:
+            files['thumb'] = thumb
+        else:
+            files = {'thumb': thumb}
     if width:
         payload['width'] = width
     if height:
@@ -746,13 +742,12 @@ def send_animation(
     if timeout:
         payload['timeout'] = timeout
     if thumb:
-        if not util.is_string(thumb):
-            if files:
-                files['thumb'] = thumb
-            else:
-                files = {'thumb': thumb}
-        else:
+        if util.is_string(thumb):
             payload['thumb'] = thumb
+        elif files:
+            files['thumb'] = thumb
+        else:
+            files = {'thumb': thumb}
     if caption_entities:
         payload['caption_entities'] = json.dumps(types.MessageEntity.to_list_of_dicts(caption_entities))
     if allow_sending_without_reply is not None:
@@ -830,13 +825,12 @@ def send_video_note(token, chat_id, data, duration=None, length=None, reply_to_m
     if timeout:
         payload['timeout'] = timeout
     if thumb:
-        if not util.is_string(thumb):
-            if files:
-                files['thumb'] = thumb
-            else:
-                files = {'thumb': thumb}
-        else:
+        if util.is_string(thumb):
             payload['thumb'] = thumb
+        elif files:
+            files['thumb'] = thumb
+        else:
+            files = {'thumb': thumb}
     if allow_sending_without_reply is not None:
         payload['allow_sending_without_reply'] = allow_sending_without_reply
     if protect_content is not None:
@@ -875,13 +869,12 @@ def send_audio(token, chat_id, audio, caption=None, duration=None, performer=Non
     if timeout:
         payload['timeout'] = timeout
     if thumb:
-        if not util.is_string(thumb):
-            if files:
-                files['thumb'] = thumb
-            else:
-                files = {'thumb': thumb}
-        else:
+        if util.is_string(thumb):
             payload['thumb'] = thumb
+        elif files:
+            files['thumb'] = thumb
+        else:
+            files = {'thumb': thumb}
     if caption_entities:
         payload['caption_entities'] = json.dumps(types.MessageEntity.to_list_of_dicts(caption_entities))
     if allow_sending_without_reply is not None:
@@ -920,13 +913,12 @@ def send_data(token, chat_id, data, data_type, reply_to_message_id=None, reply_m
     if caption:
         payload['caption'] = caption
     if thumb:
-        if not util.is_string(thumb):
-            if files:
-                files['thumb'] = thumb
-            else:
-                files = {'thumb': thumb}
-        else:
+        if util.is_string(thumb):
             payload['thumb'] = thumb
+        elif files:
+            files['thumb'] = thumb
+        else:
+            files = {'thumb': thumb}
     if caption_entities:
         payload['caption_entities'] = json.dumps(types.MessageEntity.to_list_of_dicts(caption_entities))
     if allow_sending_without_reply is not None:
@@ -949,11 +941,13 @@ def get_method_by_type(data_type):
 
 def ban_chat_member(token, chat_id, user_id, until_date=None, revoke_messages=None):
     method_url = 'banChatMember'
-    payload = {'chat_id': chat_id, 'user_id': user_id}
-    if isinstance(until_date, datetime):
-        payload['until_date'] = until_date.timestamp()
-    else:
-        payload['until_date'] = until_date
+    payload = {
+        'chat_id': chat_id,
+        'user_id': user_id,
+        'until_date': until_date.timestamp()
+        if isinstance(until_date, datetime)
+        else until_date,
+    }
     if revoke_messages is not None:
         payload['revoke_messages'] = revoke_messages
     return _make_request(token, method_url, params=payload, method='post')
@@ -1833,7 +1827,7 @@ def _convert_list_json_serializable(results):
             ret = ret + r.to_json() + ','
     if len(ret) > 0:
         ret = ret[:-1]
-    return '[' + ret + ']'
+    return f'[{ret}]'
 
 
 def _convert_markup(markup):
@@ -1888,10 +1882,7 @@ def convert_input_media_array(array):
 
 def _no_encode(func):
     def wrapper(key, val):
-        if key == 'filename':
-            return u'{0}={1}'.format(key, val)
-        else:
-            return func(key, val)
+        return u'{0}={1}'.format(key, val) if key == 'filename' else func(key, val)
 
     return wrapper
 

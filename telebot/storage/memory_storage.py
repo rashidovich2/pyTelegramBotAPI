@@ -15,10 +15,9 @@ class StateMemoryStorage(StateStorageBase):
         if chat_id in self.data:
             if user_id in self.data[chat_id]:
                 self.data[chat_id][user_id]['state'] = state
-                return True
             else:
                 self.data[chat_id][user_id] = {'state': state, 'data': {}}
-                return True
+            return True
         self.data[chat_id] = {user_id: {'state': state, 'data': {}}}
         return True
     
@@ -60,7 +59,7 @@ class StateMemoryStorage(StateStorageBase):
             if self.data[chat_id].get(user_id):
                 self.data[chat_id][user_id]['data'][key] = value
                 return True
-        raise RuntimeError('chat_id {} and user_id {} does not exist'.format(chat_id, user_id))
+        raise RuntimeError(f'chat_id {chat_id} and user_id {user_id} does not exist')
 
     def get_interactive_data(self, chat_id, user_id):
         return StateContext(self, chat_id, user_id)

@@ -70,11 +70,11 @@ def checkout(pre_checkout_query):
 
 @bot.message_handler(content_types=['successful_payment'])
 def got_payment(message):
-    bot.send_message(message.chat.id,
-                     'Hoooooray! Thanks for payment! We will proceed your order for `{} {}` as fast as possible! '
-                     'Stay in touch.\n\nUse /buy again to get a Time Machine for your friend!'.format(
-                         message.successful_payment.total_amount / 100, message.successful_payment.currency),
-                     parse_mode='Markdown')
+    bot.send_message(
+        message.chat.id,
+        f'Hoooooray! Thanks for payment! We will proceed your order for `{message.successful_payment.total_amount / 100} {message.successful_payment.currency}` as fast as possible! Stay in touch.\n\nUse /buy again to get a Time Machine for your friend!',
+        parse_mode='Markdown',
+    )
 
 
 bot.infinity_polling(skip_pending = True)

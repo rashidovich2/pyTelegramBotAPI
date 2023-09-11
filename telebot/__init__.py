@@ -508,12 +508,12 @@ class TeleBot:
             secret_token = ''.join(random.choices(string.ascii_uppercase + string.digits, k=secret_token_length))
 
         if not url_path:
-            url_path = self.token + '/'
+            url_path = f'{self.token}/'
         if url_path[-1] != '/': url_path += '/'
-        
+
         protocol = "https" if certificate else "http"
         if not webhook_url:
-            webhook_url = "{}://{}:{}/{}".format(protocol, listen, port, url_path)
+            webhook_url = f"{protocol}://{listen}:{port}/{url_path}"
 
         if certificate and certificate_key:
             # noinspection PyTypeChecker
@@ -540,7 +540,14 @@ class TeleBot:
             from telebot.ext.sync import SyncWebhookListener
         except (NameError, ImportError):
             raise ImportError("Please install uvicorn and fastapi in order to use `run_webhooks` method.")
-        self.webhook_listener = SyncWebhookListener(bot=self, secret_token=secret_token, host=listen, port=port, ssl_context=ssl_context, url_path='/'+url_path)
+        self.webhook_listener = SyncWebhookListener(
+            bot=self,
+            secret_token=secret_token,
+            host=listen,
+            port=port,
+            ssl_context=ssl_context,
+            url_path=f'/{url_path}',
+        )
         self.webhook_listener.run_app()
 
 
@@ -678,7 +685,7 @@ class TeleBot:
         new_my_chat_members = None
         new_chat_members = None
         new_chat_join_request = None
-        
+
         for update in updates:
             if apihelper.ENABLE_MIDDLEWARE and not self.use_class_middlewares:
                 try:
@@ -687,9 +694,8 @@ class TeleBot:
                     logger.error(str(e))
                     if not self.suppress_middleware_excepions:
                         raise
-                    else:
-                        if update.update_id > self.last_update_id: self.last_update_id = update.update_id
-                        continue
+                    if update.update_id > self.last_update_id: self.last_update_id = update.update_id
+                    continue
 
             if update.update_id > self.last_update_id:
                 self.last_update_id = update.update_id

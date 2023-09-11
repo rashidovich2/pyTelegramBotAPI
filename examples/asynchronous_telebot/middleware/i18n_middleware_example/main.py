@@ -198,8 +198,10 @@ async def return_user_id(message: types.Message):
 
 all_menu_texts = []
 for language in i18n.available_translations:
-    for menu_text in ("My user id", "My user name", "My first name"):
-        all_menu_texts.append(_(menu_text, language))
+    all_menu_texts.extend(
+        _(menu_text, language)
+        for menu_text in ("My user id", "My user name", "My first name")
+    )
 
 
 # When user confused language. (handles all menu buttons texts)

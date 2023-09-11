@@ -61,10 +61,8 @@ def save_chat_id(chat_id, username):
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    unique_code = extract_unique_code(message.text)
-    if unique_code:  # if the '/start' command contains a unique_code
-        username = get_username_from_storage(unique_code)
-        if username:  # if the username exists in our database
+    if unique_code := extract_unique_code(message.text):
+        if username := get_username_from_storage(unique_code):
             save_chat_id(message.chat.id, username)
             reply = "Hello {0}, how are you?".format(username)
         else:

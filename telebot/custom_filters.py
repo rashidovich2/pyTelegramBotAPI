@@ -136,7 +136,7 @@ class TextFilter:
             raise ValueError(f"Incorrect value of {filter_name!r}")
         elif isinstance(iterable, str):
             iterable = [iterable]
-        elif isinstance(iterable, list) or isinstance(iterable, tuple):
+        else:
             iterable = [i for i in iterable if isinstance(i, str)]
         return iterable
 
@@ -176,21 +176,21 @@ class TextFilter:
                 return False
 
         if self.contains:
-            result = any([i in text for i in self.contains])
+            result = any(i in text for i in self.contains)
             if result:
                 return True
             elif not result and not any((self.starts_with, self.ends_with)):
                 return False
 
         if self.starts_with:
-            result = any([text.startswith(i) for i in self.starts_with])
+            result = any(text.startswith(i) for i in self.starts_with)
             if result:
                 return True
-            elif not result and not self.ends_with:
+            elif not self.ends_with:
                 return False
 
         if self.ends_with:
-            return any([text.endswith(i) for i in self.ends_with])
+            return any(text.endswith(i) for i in self.ends_with)
 
         return False
 
@@ -243,10 +243,10 @@ class TextContainsFilter(AdvancedCustomFilter):
             raise ValueError("Incorrect text_contains value")
         elif isinstance(text, str):
             text = [text]
-        elif isinstance(text, list) or isinstance(text, tuple):
+        else:
             text = [i for i in text if isinstance(i, str)]
 
-        return any([i in message.text for i in text])
+        return any(i in message.text for i in text)
 
 
 class TextStartsFilter(AdvancedCustomFilter):

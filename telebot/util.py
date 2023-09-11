@@ -94,7 +94,11 @@ class WorkerThread(threading.Thread):
             except Queue.Empty:
                 pass
             except Exception as e:
-                logger.debug(type(e).__name__ + " occurred, args=" + str(e.args) + "\n" + traceback.format_exc())
+                logger.debug(
+                    f"{type(e).__name__} occurred, args={str(e.args)}"
+                    + "\n"
+                    + traceback.format_exc()
+                )
                 self.exception_info = e
                 self.exception_event.set()
                 if self.exception_callback:
@@ -226,8 +230,7 @@ def is_command(text: str) -> bool:
     :return: True if `text` is a command, else False.
     :rtype: :obj:`bool`
     """
-    if text is None: return False
-    return text.startswith('/')
+    return False if text is None else text.startswith('/')
 
 
 def extract_command(text: str) -> Union[str, None]:
@@ -518,7 +521,7 @@ def deprecated(warn: bool = True, alternative: Optional[Callable] = None, deprec
             if alternative:
                 info += f" Use `{alternative.__name__}` instead"
             if deprecation_text:
-                info += " " + deprecation_text
+                info += f" {deprecation_text}"
             if not warn:
                 logger.info(info)
             else:

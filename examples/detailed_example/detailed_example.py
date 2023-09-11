@@ -31,11 +31,10 @@ hideBoard = types.ReplyKeyboardRemove()  # if sent as reply_markup, will hide th
 def get_user_step(uid):
     if uid in userStep:
         return userStep[uid]
-    else:
-        knownUsers.append(uid)
-        userStep[uid] = 0
-        print("New user detected, who hasn't used \"/start\" yet")
-        return 0
+    knownUsers.append(uid)
+    userStep[uid] = 0
+    print("New user detected, who hasn't used \"/start\" yet")
+    return 0
 
 
 # only used for console output now
@@ -46,7 +45,7 @@ def listener(messages):
     for m in messages:
         if m.content_type == 'text':
             # print the sent message to the console
-            print(str(m.chat.first_name) + " [" + str(m.chat.id) + "]: " + m.text)
+            print(f"{str(m.chat.first_name)} [{str(m.chat.id)}]: {m.text}")
 
 
 bot = telebot.TeleBot(TOKEN)
@@ -73,7 +72,7 @@ def command_help(m):
     cid = m.chat.id
     help_text = "The following commands are available: \n"
     for key in commands:  # generate help text out of the commands dictionary defined at the top
-        help_text += "/" + key + ": "
+        help_text += f"/{key}: "
         help_text += commands[key] + "\n"
     bot.send_message(cid, help_text)  # send the generated help page
 

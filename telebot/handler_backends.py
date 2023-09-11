@@ -100,7 +100,7 @@ class FileHandlerBackend(HandlerBackend):
         dirs = filename.rsplit('/', maxsplit=1)[0]
         os.makedirs(dirs, exist_ok=True)
 
-        with open(filename + ".tmp", file_mode) as file:
+        with open(f"{filename}.tmp", file_mode) as file:
             if (apihelper.CUSTOM_SERIALIZER is None):
                 pickle.dump(handlers, file)
             else:
@@ -109,7 +109,7 @@ class FileHandlerBackend(HandlerBackend):
         if os.path.isfile(filename):
             os.remove(filename)
 
-        os.rename(filename + ".tmp", filename)
+        os.rename(f"{filename}.tmp", filename)
 
     @staticmethod
     def return_load_handlers(filename, del_file_after_loading=True):
@@ -142,8 +142,7 @@ class RedisHandlerBackend(HandlerBackend):
 
     def register_handler(self, handler_group_id, handler):
         handlers = []
-        value = self.redis.get(self._key(handler_group_id))
-        if value:
+        if value := self.redis.get(self._key(handler_group_id)):
             handlers = pickle.loads(value)
         handlers.append(handler)
         self.redis.set(self._key(handler_group_id), pickle.dumps(handlers))
@@ -153,8 +152,7 @@ class RedisHandlerBackend(HandlerBackend):
 
     def get_handlers(self, handler_group_id):
         handlers = None
-        value = self.redis.get(self._key(handler_group_id))
-        if value:
+        if value := self.redis.get(self._key(handler_group_id)):
             handlers = pickle.loads(value)
             self.clear_handlers(handler_group_id)
         return handlers

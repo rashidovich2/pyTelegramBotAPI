@@ -395,7 +395,7 @@ class AsyncTeleBot:
             logger.warning("Setting non_stop to False will stop polling on API and system exceptions.")
 
         self._user = await self.get_me()
-            
+
         logger.info('Starting your bot with username: [@%s]', self.user.username)
 
         self._polling = True
@@ -403,7 +403,7 @@ class AsyncTeleBot:
         try:
             while self._polling:
                 try:
-                    
+
                     updates = await self.get_updates(offset=self.offset, allowed_updates=allowed_updates, timeout=timeout, request_timeout=request_timeout)
                     if updates:
                         self.offset = updates[-1].update_id + 1
@@ -416,11 +416,10 @@ class AsyncTeleBot:
                     return
                 except asyncio_helper.RequestTimeout as e:
                     logger.error(str(e))
-                    if non_stop:
-                        await asyncio.sleep(2)
-                        continue
-                    else:
+                    if not non_stop:
                         return
+                    await asyncio.sleep(2)
+                    continue
                 except asyncio_helper.ApiException as e:
                     handled = False
                     if self.exception_handler:
@@ -466,10 +465,13 @@ class AsyncTeleBot:
         :param messages:
         :return:
         """
-        tasks = []
         middlewares = await self._get_middlewares(update_type)
-        for message in messages:
-            tasks.append(self._run_middlewares_and_handlers(message, handlers, middlewares, update_type))
+        tasks = [
+            self._run_middlewares_and_handlers(
+                message, handlers, middlewares, update_type
+            )
+            for message in messages
+        ]
         await asyncio.gather(*tasks)
 
     async def _run_middlewares_and_handlers(self, message, handlers, middlewares, update_type):
@@ -493,7 +495,9 @@ class AsyncTeleBot:
                     if hasattr(middleware, f'pre_process_{update_type}'):
                         middleware_result = await getattr(middleware, f'pre_process_{update_type}')(message, data)
                     else:
-                        logger.error('Middleware {} does not have pre_process_{} method. pre_process function execution was skipped.'.format(middleware.__class__.__name__, update_type))
+                        logger.error(
+                            f'Middleware {middleware.__class__.__name__} does not have pre_process_{update_type} method. pre_process function execution was skipped.'
+                        )
                         middleware_result = None
                 else:
                     middleware_result = await middleware.pre_process(message, data)
@@ -506,11 +510,9 @@ class AsyncTeleBot:
         if handlers and not(skip_handlers):
             try:
                 for handler in handlers:
-                    params = []
                     process_update = await self._test_message_handler(handler, message)
                     if not process_update: continue
-                    for i in signature(handler['function']).parameters:
-                        params.append(i)
+                    params = list(signature(handler['function']).parameters)
                     result = None
                     if len(params) == 1:
                         result = await handler['function'](message)
@@ -520,7 +522,9 @@ class AsyncTeleBot:
                         elif len(params) == 3:
                             result = await handler['function'](message, data=data, bot=self)
                         else:
-                            logger.error("It is not allowed to pass data and values inside data to the handler. Check your handler: {}".format(handler['function']))
+                            logger.error(
+                                f"It is not allowed to pass data and values inside data to the handler. Check your handler: {handler['function']}"
+                            )
                             return
                     else:
                         data_copy = data.copy()
@@ -531,7 +535,9 @@ class AsyncTeleBot:
                         if handler.get('pass_bot'):
                             data_copy["bot"] = self
                         if len(data_copy) > len(params) - 1: # remove the message parameter
-                            logger.error("You are passing more data than the handler needs. Check your handler: {}".format(handler['function']))
+                            logger.error(
+                                f"You are passing more data than the handler needs. Check your handler: {handler['function']}"
+                            )
                             return
                         result = await handler["function"](message, **data_copy)
                     if not isinstance(result, ContinueHandling):
@@ -549,7 +555,9 @@ class AsyncTeleBot:
                     if hasattr(middleware, f'post_process_{update_type}'):
                         await getattr(middleware, f'post_process_{update_type}')(message, data, handler_error)
                     else:
-                        logger.error('Middleware {} does not have post_process_{} method. post_process function execution was skipped.'.format(middleware.__class__.__name__, update_type))
+                        logger.error(
+                            f'Middleware {middleware.__class__.__name__} does not have post_process_{update_type} method. post_process function execution was skipped.'
+                        )
                 else: await middleware.post_process(message, data, handler_error)
 
     async def process_new_updates(self, updates: List[types.Update]):
@@ -2081,14 +2089,14 @@ class AsyncTeleBot:
 
 
         if not url_path:
-            url_path = self.token + '/'
+            url_path = f'{self.token}/'
         if url_path[-1] != '/': url_path += '/'
-        
+
 
 
         protocol = "https" if certificate else "http"
         if not webhook_url:
-            webhook_url = "{}://{}:{}/{}".format(protocol, listen, port, url_path)
+            webhook_url = f"{protocol}://{listen}:{port}/{url_path}"
 
         if certificate and certificate_key:
             ssl_ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
@@ -2116,7 +2124,14 @@ class AsyncTeleBot:
             from telebot.ext.aio import AsyncWebhookListener
         except (NameError, ImportError):
             raise ImportError("Please install uvicorn and fastapi in order to use `run_webhooks` method.")
-        self.webhook_listener = AsyncWebhookListener(bot=self, secret_token=secret_token, host=listen, port=port, ssl_context=ssl_context, url_path='/'+url_path)
+        self.webhook_listener = AsyncWebhookListener(
+            bot=self,
+            secret_token=secret_token,
+            host=listen,
+            port=port,
+            ssl_context=ssl_context,
+            url_path=f'/{url_path}',
+        )
         await self.webhook_listener.run_app()
 
 
@@ -2143,8 +2158,7 @@ class AsyncTeleBot:
         """
         Alternative for delete_webhook but uses set_webhook
         """
-        result = await self.set_webhook()
-        return result
+        return await self.set_webhook()
 
     async def get_webhook_info(self, timeout: Optional[int]=None) -> types.WebhookInfo:
         """
@@ -2213,8 +2227,7 @@ class AsyncTeleBot:
 
         :return: :obj:`bool`
         """
-        result = await asyncio_helper.leave_chat(self.token, chat_id)
-        return result
+        return await asyncio_helper.leave_chat(self.token, chat_id)
 
     async def get_chat_administrators(self, chat_id: Union[int, str]) -> List[types.ChatMember]:
         """
@@ -2250,8 +2263,7 @@ class AsyncTeleBot:
         :return: Number of members in the chat.
         :rtype: :obj:`int`
         """
-        result = await asyncio_helper.get_chat_member_count(self.token, chat_id)
-        return result
+        return await asyncio_helper.get_chat_member_count(self.token, chat_id)
     
     async def get_chat_member_count(self, chat_id: Union[int, str]) -> int:
         """
@@ -2265,8 +2277,7 @@ class AsyncTeleBot:
         :return: Number of members in the chat.
         :rtype: :obj:`int`
         """
-        result = await asyncio_helper.get_chat_member_count(self.token, chat_id)
-        return result
+        return await asyncio_helper.get_chat_member_count(self.token, chat_id)
 
     async def set_chat_sticker_set(self, chat_id: Union[int, str], sticker_set_name: str) -> types.StickerSet:
         """
@@ -2285,8 +2296,9 @@ class AsyncTeleBot:
         :return: StickerSet object
         :rtype: :class:`telebot.types.StickerSet`
         """
-        result = await asyncio_helper.set_chat_sticker_set(self.token, chat_id, sticker_set_name)
-        return result
+        return await asyncio_helper.set_chat_sticker_set(
+            self.token, chat_id, sticker_set_name
+        )
 
     async def delete_chat_sticker_set(self, chat_id: Union[int, str]) -> bool:
         """
@@ -2302,8 +2314,7 @@ class AsyncTeleBot:
         :return: Returns True on success.
         :rtype: :obj:`bool`
         """
-        result = await asyncio_helper.delete_chat_sticker_set(self.token, chat_id)
-        return result
+        return await asyncio_helper.delete_chat_sticker_set(self.token, chat_id)
 
     async def answer_web_app_query(self, web_app_query_id: str, result: types.InlineQueryResultBase) -> types.SentWebAppMessage:
         """
@@ -4543,9 +4554,7 @@ class AsyncTeleBot:
 
         result = await asyncio_helper.edit_message_text(self.token, text, chat_id, message_id, inline_message_id, parse_mode,
                                              entities, disable_web_page_preview, reply_markup)
-        if type(result) == bool:  # if edit inline message return is bool not Message.
-            return result
-        return types.Message.de_json(result)
+        return result if type(result) == bool else types.Message.de_json(result)
 
     async def edit_message_media(
             self, media: Any, chat_id: Optional[Union[int, str]]=None, 
@@ -4578,9 +4587,7 @@ class AsyncTeleBot:
         :rtype: :obj:`types.Message` or :obj:`bool`
         """
         result = await asyncio_helper.edit_message_media(self.token, media, chat_id, message_id, inline_message_id, reply_markup)
-        if type(result) == bool:  # if edit inline message return is bool not Message.
-            return result
-        return types.Message.de_json(result)
+        return result if type(result) == bool else types.Message.de_json(result)
 
     async def edit_message_reply_markup(
             self, chat_id: Optional[Union[int, str]]=None, 
@@ -4608,9 +4615,7 @@ class AsyncTeleBot:
         :rtype: :obj:`types.Message` or :obj:`bool`
         """
         result = await asyncio_helper.edit_message_reply_markup(self.token, chat_id, message_id, inline_message_id, reply_markup)
-        if type(result) == bool:
-            return result
-        return types.Message.de_json(result)
+        return result if type(result) == bool else types.Message.de_json(result)
 
     async def send_game(
             self, chat_id: Union[int, str], game_short_name: str, 
@@ -4704,9 +4709,7 @@ class AsyncTeleBot:
         """
         result = await asyncio_helper.set_game_score(self.token, user_id, score, force, disable_edit_message, chat_id,
                                           message_id, inline_message_id)
-        if type(result) == bool:
-            return result
-        return types.Message.de_json(result)
+        return result if type(result) == bool else types.Message.de_json(result)
 
     async def get_game_high_scores(
             self, user_id: int, chat_id: Optional[Union[int, str]]=None,
@@ -4896,7 +4899,7 @@ class AsyncTeleBot:
             send_phone_number_to_provider: Optional[bool]=None,
             send_email_to_provider: Optional[bool]=None,
             is_flexible: Optional[bool]=None) -> str:
-            
+
         """
         Use this method to create a link for an invoice. 
         Returns the created invoice link as String on success.
@@ -4974,13 +4977,29 @@ class AsyncTeleBot:
         :return: Created invoice link as String on success.
         :rtype: :obj:`str`
         """
-        result = await asyncio_helper.create_invoice_link(
-            self.token, title, description, payload, provider_token,
-            currency, prices, max_tip_amount, suggested_tip_amounts, provider_data,
-            photo_url, photo_size, photo_width, photo_height, need_name, need_phone_number,
-            need_email, need_shipping_address, send_phone_number_to_provider,
-            send_email_to_provider, is_flexible)
-        return result
+        return await asyncio_helper.create_invoice_link(
+            self.token,
+            title,
+            description,
+            payload,
+            provider_token,
+            currency,
+            prices,
+            max_tip_amount,
+            suggested_tip_amounts,
+            provider_data,
+            photo_url,
+            photo_size,
+            photo_width,
+            photo_height,
+            need_name,
+            need_phone_number,
+            need_email,
+            need_shipping_address,
+            send_phone_number_to_provider,
+            send_email_to_provider,
+            is_flexible,
+        )
 
     # noinspection PyShadowingBuiltins
     async def send_poll(
@@ -5209,9 +5228,7 @@ class AsyncTeleBot:
 
         result = await asyncio_helper.edit_message_caption(self.token, caption, chat_id, message_id, inline_message_id,
                                                 parse_mode, caption_entities, reply_markup)
-        if type(result) == bool:
-            return result
-        return types.Message.de_json(result)
+        return result if type(result) == bool else types.Message.de_json(result)
 
     async def reply_to(self, message: types.Message, text: str, **kwargs) -> types.Message:
         """

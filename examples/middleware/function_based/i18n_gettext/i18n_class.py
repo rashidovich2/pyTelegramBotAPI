@@ -42,10 +42,7 @@ class I18N:
             lang = self.context_lang.language
 
         if lang not in self.translations:
-            if n == 1:
-                return singular
-            return plural
-
+            return singular if n == 1 else plural
         translator = self.translations[lang]
         return translator.ngettext(singular, plural, n)
 
@@ -65,8 +62,8 @@ class I18N:
             if not os.path.isdir(translations_path):
                 continue
 
-            po_file = os.path.join(translations_path, self.domain + '.po')
-            mo_file = po_file[:-2] + 'mo'
+            po_file = os.path.join(translations_path, f'{self.domain}.po')
+            mo_file = f'{po_file[:-2]}mo'
 
             if os.path.isfile(po_file) and not os.path.isfile(mo_file):
                 raise FileNotFoundError(f"Translations for: {name!r} were not compiled!")

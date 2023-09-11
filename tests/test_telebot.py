@@ -39,7 +39,7 @@ class TestTeleBot:
     def test_message_listener(self):
         msg_list = []
         for x in range(100):
-            msg_list.append(self.create_text_message('Message ' + str(x)))
+            msg_list.append(self.create_text_message(f'Message {str(x)}'))
 
         def listener(messages):
             assert len(messages) == 100
@@ -96,7 +96,7 @@ class TestTeleBot:
 
         bot.process_new_messages([msg])
         time.sleep(1)
-        assert not msg.text == 'got'
+        assert msg.text != 'got'
 
     def test_message_handler_reg_fail(self):
         bot = telebot.TeleBot('')
@@ -109,7 +109,7 @@ class TestTeleBot:
 
         bot.process_new_messages([msg])
         time.sleep(1)
-        assert not msg.text == 'got'
+        assert msg.text != 'got'
 
     def test_send_message_with_markdown(self):
         tb = telebot.TeleBot(TOKEN)
@@ -199,7 +199,6 @@ class TestTeleBot:
             assert False
         except Exception as e:
             print(e)
-            assert True
 
     def test_send_photo(self):
         file_data = open('../examples/detailed_example/kitten.jpg', 'rb')
@@ -336,14 +335,14 @@ class TestTeleBot:
         text = 'CI reply_to Test Message'
         tb = telebot.TeleBot(TOKEN)
         msg = tb.send_message(CHAT_ID, text)
-        ret_msg = tb.reply_to(msg, text + ' REPLY')
+        ret_msg = tb.reply_to(msg, f'{text} REPLY')
         assert ret_msg.reply_to_message.message_id == msg.message_id
 
     def test_register_for_reply(self):
         text = 'CI reply_to Test Message'
         tb = telebot.TeleBot(TOKEN)
         msg = tb.send_message(CHAT_ID, text, reply_markup=types.ForceReply())
-        reply_msg = tb.reply_to(msg, text + ' REPLY')
+        reply_msg = tb.reply_to(msg, f'{text} REPLY')
 
         def process_reply(message):
             assert msg.message_id == message.reply_to_message.message_id
